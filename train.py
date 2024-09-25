@@ -143,9 +143,10 @@ def make_checkpointer(trainer, validator, checkpoint_interval, checkpoints_dir, 
     if resume:  # From most recent checkpoint before preemption
         checkpoints_dir = pathlib.Path(checkpoints_dir)
         checkpoints = {filepath: int(re.search(r'checkpoint_(\d+)', str(filepath)).group(1)) for filepath in checkpoints_dir.glob('*.pt')}
-        checkpoint = max(checkpoints, key=checkpoints.get)
-        checkpointer.load_objects(state_dict, checkpoint)
-        _log.info(f'Resuming training from checkpoint: {checkpoint}')
+        if checkpoints:
+            checkpoint = max(checkpoints, key=checkpoints.get)
+            checkpointer.load_objects(state_dict, checkpoint)
+            _log.info(f'Resuming training from checkpoint: {checkpoint}')
 
 
 @ex.capture
