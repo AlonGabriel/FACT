@@ -158,5 +158,7 @@ cython_debug/
 .idea
 
 # Project specific
+/analysis
+/data
 /runs
 /wandb
