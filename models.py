@@ -9,6 +9,8 @@ import torch.nn.functional as F
 import torchvision.ops as ops
 from transformers import ClapConfig, ClapModel
 
+from dreams import DreaMS
+
 
 @dataclass
 class ModelOutputs:
@@ -70,8 +72,41 @@ class CLAPBasedModel(FoundationModel):
         return raw_outputs, proj_embeds
 
 
+class DreaMSBasedModel(FoundationModel):
+
+    @staticmethod
+    def from_base_model(base_model, projection_head, random_init, prediction_head):
+        backbone = DreaMS()
+        d_model = backbone.d_model
+        proj_head = nn.Linear(d_model, d_model)
+        pred_head = FoundationModel.mlp_head(d_model, prediction_head) if prediction_head else None
+        model = DreaMSBasedModel(backbone, proj_head, pred_head)
+        if not random_init:
+            state_dict = torch.load('checkpoints/DreaMS.pt')
+            model.load_state_dict(state_dict, strict=False)
+        return model
+
+    def forward_backbone(self, x):
+        x = self.top_n_mz(x)
+        raw_outputs = self.backbone(x)
+        raw_outputs = raw_outputs[:, 0]  # Precursor
+        proj_embeds = None
+        if self.proj_head is not None:
+            proj_embeds = self.proj_head(raw_outputs)
+        return raw_outputs, proj_embeds
+
+    def top_n_mz(self, x):
+        top_n = self.backbone.top_n + 1  # Precursor
+        with torch.no_grad():
+            x, i = torch.sort(x, descending=True)
+            i = i + 100  # Our spectra range from 100 to 1000
+            stacked = torch.stack((i, x), dim=-1)
+            return stacked[:, :top_n, :]
+
+
 construct = {
     'laion/clap-htsat-unfused': CLAPBasedModel,
+    'pluskal-lab/DreaMS': DreaMSBasedModel,
 }
 
 

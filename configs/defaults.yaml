@@ -3,7 +3,7 @@ device: cuda
 base_model: laion/clap-htsat-unfused
 projection_head: yes
 prediction_head: [2]
-random_init: yes
+random_init: no
 checkpoint: null
 # Data
 dataset: null
