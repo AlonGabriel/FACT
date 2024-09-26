@@ -6,7 +6,6 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.ops as ops
 from transformers import ClapConfig, ClapModel
 
 from dreams import DreaMS
@@ -44,8 +43,18 @@ class FoundationModel(nn.Module, ABC):
         pass
 
     @staticmethod
-    def mlp_head(d_input, hidden_channels):
-        return ops.MLP(in_channels=d_input, hidden_channels=hidden_channels, norm_layer=nn.BatchNorm1d, dropout=0.5)
+    def mlp_head(d_input, hidden_channels, norm_layer=nn.BatchNorm1d, activation_layer=nn.ReLU, dropout=0.5, bias=True):
+        layers = []
+        in_dim = d_input
+        for hidden_dim in hidden_channels[:-1]:
+            layers.append(nn.Linear(in_dim, hidden_dim, bias=bias))
+            if norm_layer is not None:
+                layers.append(norm_layer(hidden_dim))
+            layers.append(activation_layer())
+            layers.append(nn.Dropout(dropout))
+            in_dim = hidden_dim
+        layers.append(nn.Linear(in_dim, hidden_channels[-1], bias=bias))
+        return nn.Sequential(*layers)
 
 
 class CLAPBasedModel(FoundationModel):
