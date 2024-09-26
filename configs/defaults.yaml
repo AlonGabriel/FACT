@@ -27,6 +27,8 @@ classification_metrics: no
 clustering_metrics: no
 target: predictions
 test_eval_freq: -1
+eval_only: no
+eval_on_best_checkpoint: yes
 # WandB
 name: null
 project: FACT

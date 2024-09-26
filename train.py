@@ -28,6 +28,7 @@ from metrics import (
 from models import construct_model
 from utils import (
     register_configs_files,
+    restore_best,
 )
 
 ex = Experiment(save_git_info=False)
@@ -150,7 +151,7 @@ def make_checkpointer(trainer, validator, checkpoint_interval, checkpoints_dir, 
     )
     validator.add_event_handler(Events.COMPLETED, checkpointer, validator, state_dict)
 
-    if resume:  # From most recent checkpoint before preemption
+    if resume:  # From the most recent checkpoint before preemption
         checkpoints_dir = pathlib.Path(checkpoints_dir)
         checkpoints = {filepath: int(re.search(r'checkpoint_(\d+)', str(filepath)).group(1)) for filepath in checkpoints_dir.glob('*.pt')}
         if checkpoints:
@@ -160,7 +161,7 @@ def make_checkpointer(trainer, validator, checkpoint_interval, checkpoints_dir, 
 
 
 @ex.capture
-def make_logger(trainer, validator, tester, name, project, _config):
+def make_logger(trainer, validator, tester, best_bester, name, project, _config):
     wandb = WandBLogger(
         name=name,
         project=project,
@@ -188,11 +189,18 @@ def make_logger(trainer, validator, tester, name, project, _config):
         event_name=Events.COMPLETED,
         global_step_transform=lambda engine, event: trainer.engine.state.iteration,
     )
+    wandb.attach_output_handler(
+        best_bester,
+        tag='test/best',
+        metric_names='all',
+        event_name=Events.COMPLETED,
+        global_step_transform=lambda engine, event: trainer.engine.state.iteration,
+    )
     return wandb
 
 
 @ex.automain
-def main(device, num_epochs, test_eval_freq):
+def main(device, num_epochs, eval_only, test_eval_freq, eval_on_best_checkpoint, checkpoints_dir):
     device = torch.device(device)
     model = make_model()
     model = model.to(device)
@@ -202,16 +210,26 @@ def main(device, num_epochs, test_eval_freq):
     trainer = make_trainer(model, criterion, optimizer, device)
     validator = make_evaluator(model, criterion, device)
     tester = make_evaluator(model, criterion, device)
+    best_bester = make_evaluator(model, criterion, device)
     # Evaluation Callbacks
     trainer.on(Events.EPOCH_COMPLETED, validator.run, valid_set)
-    trainer.on(Events.EPOCH_COMPLETED(every=test_eval_freq) if test_eval_freq > 0 else Events.COMPLETED, tester.run, test_set)
+    test_event = Events.EPOCH_COMPLETED(every=test_eval_freq) if test_eval_freq > 0 else Events.COMPLETED
+    trainer.on(test_event, tester.run, test_set)
     # Loss and Progress Bar
     RunningAverage(output_transform=lambda x: x).attach(trainer.engine, 'loss')
     ProgressBar(persist=True).attach(trainer.engine, ['loss'])
     # Checkpointing
     make_checkpointer(trainer, validator)
     # Logging
-    wandb = make_logger(trainer, validator, tester)
-    # Training
-    trainer.run(train_set, num_epochs)
+    wandb = make_logger(trainer, validator, tester, best_bester)
+    # Training and Evaluation
+    if not eval_only:
+        trainer.run(train_set, num_epochs)
+    else:
+        tester.run(test_set)
+    # Evaluation using the best checkpoint
+    if eval_on_best_checkpoint:
+        restore_best(checkpoints_dir, model)
+        best_bester.run(test_set)
+    # Cleanup
     wandb.close()
