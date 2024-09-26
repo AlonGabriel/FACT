@@ -33,7 +33,7 @@ eval_on_best_checkpoint: yes
 name: null
 project: FACT
 # Checkpointing
-checkpoint_interval: 1
+checkpoint_interval: 5
 checkpoints_dir: null
 monitor: balanced_accuracy
 objective: maximize
