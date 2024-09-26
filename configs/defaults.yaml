@@ -5,8 +5,11 @@ projection_head: yes
 prediction_head: [2]
 random_init: no
 checkpoint: null
-# Data
+# Labeled Data
 dataset: null
+# Unlabeled Data
+unlabeled_data: null
+unlabeled_ratio: 1
 # Loss
 loss_fn: CrossEntropyLoss
 loss_params: {}
@@ -34,3 +37,6 @@ monitor: balanced_accuracy
 objective: maximize
 num_saved: 2
 resume: yes
+# FixMatch
+tau: 0.95
+llambda: 1

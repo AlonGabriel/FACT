@@ -1,12 +1,9 @@
 import abc
 
-import numpy as np
-from munch import Munch
-import scipy.stats as stats
 import torch
 from ignite.engine import Engine
 from ignite.utils import convert_tensor
-from sklearn.cluster import DBSCAN
+from munch import Munch
 
 from transforms import IntensityAwareAugmentation
 
@@ -56,3 +53,31 @@ class Supervised(BaseTrainer):
         return self.criterion(outputs, y)
 
 
+class FixMatch(BaseTrainer):
+
+    def __init__(self, model, criterion, optimizer, device, config):
+        super().__init__(model, criterion, optimizer, device, config)
+        self.transform = IntensityAwareAugmentation()
+
+    def forward(self, batch):
+        (x, y), u = batch
+        # Loss for labeled data
+        outputs = self.model(x)
+        outputs = outputs.predictions
+        l_s = self.criterion(outputs, y)
+        # Pseudo-labeling
+        with torch.no_grad():
+            outputs = self.model(u)
+            outputs = outputs.predictions
+            scores = torch.softmax(outputs, dim=1)
+            scores, pseudo_labels = scores.max(dim=1)
+            is_confident = scores.ge(self.config.tau).bool()
+        # Loss for unlabeled data
+        l_u = 0
+        if is_confident.any():
+            ut = self.transform(u)
+            outputs = self.model(ut)
+            outputs = outputs.predictions
+            l_u = self.criterion(outputs[is_confident], pseudo_labels[is_confident])
+        # Weighted sum
+        return l_s + self.config.llambda * l_u

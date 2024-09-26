@@ -14,7 +14,11 @@ from readable_number import ReadableNumber
 from sacred import Experiment
 
 import trainers
-from datasets import from_npz
+from datasets import (
+    NumpyDataset,
+    ZippedLoader,
+    from_npz,
+)
 from metrics import (
     BalancedAccuracy,
     Sensitivity,
@@ -60,7 +64,7 @@ def make_optimizer(model, optimizer, learning_rate):
 
 
 @ex.capture
-def make_loaders(dataset, batch_size, num_workers):
+def make_loaders(dataset, batch_size, num_workers, unlabeled_data, unlabeled_ratio):
     dataset = np.load(dataset)
     train_set = from_npz(dataset, 'train')
     valid_set = from_npz(dataset, 'val')
@@ -69,6 +73,12 @@ def make_loaders(dataset, batch_size, num_workers):
     train_loader = data.DataLoader(train_set, batch_size=batch_size, sampler=sampler, num_workers=num_workers)
     valid_loader = data.DataLoader(valid_set, batch_size=batch_size, num_workers=num_workers)
     test_loader = data.DataLoader(test_set, batch_size=batch_size, num_workers=num_workers)
+    if unlabeled_data is not None:
+        unlabeled_data = np.load(unlabeled_data)
+        unlabeled_batch_size = int(batch_size * unlabeled_ratio)
+        unlabeled_dataset = NumpyDataset(**unlabeled_data, output_labels=False)
+        unlabeled_loader = data.DataLoader(unlabeled_dataset, unlabeled_batch_size, num_workers=num_workers)
+        return ZippedLoader(train_loader, unlabeled_loader), valid_loader, test_loader
     return train_loader, valid_loader, test_loader
 
 

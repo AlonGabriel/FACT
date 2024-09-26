@@ -37,3 +37,19 @@ class NumpyDataset(data.Dataset):
 def from_npz(ds, subset, transform=None):
     X, y = ds[f'X_{subset}'], ds[f'y_{subset}']
     return NumpyDataset(X, y, transform=transform)
+
+
+class ZippedLoader:
+
+    def __init__(self, primary, secondary):
+        self.primary = primary
+        self.secondary = secondary
+
+    def __len__(self):
+        return len(self.primary)
+
+    def __iter__(self):
+        secondary = iter(self.secondary)
+        for batch in self.primary:
+            yield batch, next(secondary)
+
