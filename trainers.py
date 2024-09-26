@@ -72,6 +72,8 @@ class FixMatch(BaseTrainer):
             scores = torch.softmax(outputs, dim=1)
             scores, pseudo_labels = scores.max(dim=1)
             is_confident = scores.ge(self.config.tau).bool()
+        # Update metrics
+        self.smoothed_metric('num_confident', is_confident.sum().item())
         # Loss for unlabeled data
         l_u = 0
         if is_confident.any():
@@ -81,3 +83,8 @@ class FixMatch(BaseTrainer):
             l_u = self.criterion(outputs[is_confident], pseudo_labels[is_confident])
         # Weighted sum
         return l_s + self.config.llambda * l_u
+
+    def smoothed_metric(self, metric, value, alpha=0.8):
+        prev = self.engine.state.metrics.get(metric, value)
+        updated = alpha * prev + (1 - alpha) * value
+        self.engine.state.metrics[metric] = updated
