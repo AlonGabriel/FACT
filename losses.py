@@ -42,7 +42,7 @@ class NTXentLoss(nn.Module):
         denominator = mask * torch.exp(sim_matrix / self.temperature)
         denominator = torch.sum(denominator, dim=1)
 
-        losses = -torch.log(nominator / denominator)
+        losses = -torch.log(nominator / (denominator + 1e-6))
         return torch.sum(losses) / (2 * batch_size)
 
     @classmethod
