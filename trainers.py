@@ -2,10 +2,10 @@ import abc
 
 import torch
 from ignite.engine import Engine
-from ignite.utils import convert_tensor
 from munch import Munch
 
 from transforms import IntensityAwareAugmentation
+from utils import prepare_batch
 
 
 class BaseTrainer(abc.ABC):
@@ -21,14 +21,11 @@ class BaseTrainer(abc.ABC):
     def _update(self, engine, batch):
         self.optimizer.zero_grad()
         self.model.train()
-        batch = self.prepare_batch(batch)
+        batch = prepare_batch(batch, self.device)
         loss = self.forward(batch)
         loss.backward()
         self.optimizer.step()
         return loss.item()
-
-    def prepare_batch(self, batch):
-        return [convert_tensor(el, device=self.device) for el in batch]
 
     def on(self, event, handler, *args, **kwargs):
         return self.engine.add_event_handler(event, lambda engine: handler(*args, **kwargs))

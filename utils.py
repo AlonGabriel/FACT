@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import torch
+from ignite.utils import convert_tensor
 
 
 def register_configs_files(ex, base_dir=Path('configs')):
@@ -23,3 +24,7 @@ def restore_best(checkpoints_dir, model):
     state_dict = torch.load(checkpoint)
     model.load_state_dict(state_dict['model'])
     return model
+
+
+def prepare_batch(batch, device):
+    return [convert_tensor(el, device=device) for el in batch]
