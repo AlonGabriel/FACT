@@ -6,3 +6,5 @@ loss_params:
 weighted_sampling: no
 prediction_head: no
 batch_size: 256
+monitor: loss
+objective: minimize
