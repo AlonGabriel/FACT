@@ -13,6 +13,7 @@ from ignite.metrics import RunningAverage, Loss
 from readable_number import ReadableNumber
 from sacred import Experiment
 
+import losses
 import trainers
 from datasets import (
     NumpyDataset,
@@ -54,7 +55,7 @@ def make_model(base_model, projection_head, prediction_head, random_init, checkp
 
 @ex.capture
 def make_criterion(loss_fn, loss_params):
-    constructor = getattr(nn, loss_fn)
+    constructor = getattr(losses, loss_fn) if hasattr(losses, loss_fn) else getattr(nn, loss_fn)
     return constructor(**loss_params)
 
 
@@ -65,13 +66,15 @@ def make_optimizer(model, optimizer, learning_rate):
 
 
 @ex.capture
-def make_loaders(dataset, batch_size, num_workers, unlabeled_data, unlabeled_ratio):
+def make_loaders(dataset, batch_size, weighted_sampling, num_workers, unlabeled_data, unlabeled_ratio):
     dataset = np.load(dataset)
     train_set = from_npz(dataset, 'train')
     valid_set = from_npz(dataset, 'val')
     test_set = from_npz(dataset, 'test')
-    sampler = train_set.weighted_sampler()
-    train_loader = data.DataLoader(train_set, batch_size=batch_size, sampler=sampler, num_workers=num_workers)
+    if weighted_sampling:
+        train_loader = data.DataLoader(train_set, batch_size=batch_size, sampler=train_set.weighted_sampler(), num_workers=num_workers)
+    else:
+        train_loader = data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     valid_loader = data.DataLoader(valid_set, batch_size=batch_size, num_workers=num_workers)
     test_loader = data.DataLoader(test_set, batch_size=batch_size, num_workers=num_workers)
     if unlabeled_data is not None:

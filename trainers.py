@@ -88,3 +88,17 @@ class FixMatch(BaseTrainer):
         prev = self.engine.state.metrics.get(metric, value)
         updated = alpha * prev + (1 - alpha) * value
         self.engine.state.metrics[metric] = updated
+
+
+class SimCLR(BaseTrainer):
+
+    def __init__(self, model, criterion, optimizer, device, config):
+        super().__init__(model, criterion, optimizer, device, config)
+        self.transform = IntensityAwareAugmentation()
+
+    def forward(self, batch):
+        x, y = batch
+        x1, x2 = self.transform(x), self.transform(x)
+        z1, z2 = self.model(x1), self.model(x2)
+        z1, z2 = z1.embeddings, z2.embeddings
+        return self.criterion(z1, z2)

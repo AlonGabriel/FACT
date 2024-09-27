@@ -1,0 +1,8 @@
+project: FACT-SimCLR
+trainer: SimCLR
+loss_fn: NTXentLoss
+loss_params:
+  normalize: no
+weighted_sampling: no
+prediction_head: no
+batch_size: 256
