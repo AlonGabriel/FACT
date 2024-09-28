@@ -8,7 +8,7 @@ import torch.optim as optim
 import torch.utils.data as data
 from ignite.engine import Events, Engine
 from ignite.engine import create_supervised_evaluator
-from ignite.handlers import ProgressBar, WandBLogger, ModelCheckpoint
+from ignite.handlers import EarlyStopping, ModelCheckpoint, ProgressBar, WandBLogger
 from ignite.metrics import RunningAverage, Loss
 from readable_number import ReadableNumber
 from sacred import Experiment
@@ -223,8 +223,15 @@ def make_logger(trainer, validator, tester, best_bester, name, project, _config)
     return wandb
 
 
+@ex.capture
+def make_early_stopper(trainer, patience):
+    def neg_loss(engine):
+        return -engine.state.metrics['loss']
+    return EarlyStopping(patience, score_function=neg_loss, trainer=trainer.engine, cumulative_delta=True)
+
+
 @ex.automain
-def main(device, num_epochs, eval_only, test_eval_freq, eval_on_best_checkpoint, checkpoints_dir):
+def main(device, num_epochs, early_stopping, eval_only, test_eval_freq, eval_on_best_checkpoint, checkpoints_dir):
     device = torch.device(device)
     model = make_model()
     model = model.to(device)
@@ -235,7 +242,10 @@ def main(device, num_epochs, eval_only, test_eval_freq, eval_on_best_checkpoint,
     validator = make_evaluator(model, criterion, device)
     tester = make_evaluator(model, criterion, device)
     best_bester = make_evaluator(model, criterion, device)
-    # Evaluation Callbacks
+    # Callbacks
+    if early_stopping:
+        handler = make_early_stopper(trainer)
+        validator.add_event_handler(Events.COMPLETED, handler)
     trainer.on(Events.EPOCH_COMPLETED, validator.run, valid_set)
     test_event = Events.EPOCH_COMPLETED(every=test_eval_freq) if test_eval_freq > 0 else Events.COMPLETED
     trainer.on(test_event, tester.run, test_set)

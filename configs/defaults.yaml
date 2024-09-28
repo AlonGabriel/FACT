@@ -40,6 +40,9 @@ monitor: balanced_accuracy
 objective: maximize
 num_saved: 2
 resume: yes
+# Early Stopping
+early_stopping: no
+patience: 10
 # FixMatch
 tau: 0.95
 llambda: 1
