@@ -6,13 +6,18 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data
-from ignite.engine import Events, Engine
-from ignite.engine import create_supervised_evaluator
-from ignite.handlers import EarlyStopping, ModelCheckpoint, ProgressBar, WandBLogger
-from ignite.metrics import RunningAverage, Loss
+from ignite.engine import Events
+from ignite.handlers import (
+    EarlyStopping,
+    ModelCheckpoint,
+    ProgressBar,
+    WandBLogger,
+)
+from ignite.metrics import RunningAverage
 from readable_number import ReadableNumber
 from sacred import Experiment
 
+import evaluators
 import losses
 import trainers
 from datasets import (
@@ -20,17 +25,9 @@ from datasets import (
     ZippedLoader,
     from_npz,
 )
-from metrics import (
-    BalancedAccuracy,
-    Sensitivity,
-    Specificity,
-    ROC_AUC,
-)
 from models import construct_model
-from transforms import IntensityAwareAugmentation
 from utils import (
     register_configs_files,
-    prepare_batch,
     restore_best,
 )
 
@@ -95,54 +92,10 @@ def make_trainer(model, criterion, optimizer, device, trainer, _config):
 
 
 @ex.capture
-def make_evaluator(model, criterion, device, classification_metrics, target):
-    if isinstance(criterion, losses.NTXentLoss):
-        # This is a hacky way to do this. I should probably declare a proper interface for evaluators, just like trainers.
-        transform = IntensityAwareAugmentation()
-
-        def process_function(engine, batch):
-            model.eval()
-            with torch.no_grad():
-                x, y = prepare_batch(batch, device)
-                x1, x2 = transform(x), transform(x)
-                z1, z2 = model(x1), model(x2)
-                z1, z2 = z1.embeddings, z2.embeddings
-                return z1, z2
-
-        evaluator = Engine(process_function)
-
-        Loss(criterion).attach(evaluator, 'loss')
-
-        return evaluator
-
-    evaluator = create_supervised_evaluator(model, device=device)
-
-    def grab_target(output):
-        output, y = output
-        output = getattr(output, target)
-        return output, y
-
-    Loss(criterion, output_transform=grab_target).attach(evaluator, 'loss')
-
-    def apply_softmax(raw_scores=False):
-        def wrapped(output):
-            output, y = output
-            logits = output.predictions
-            scores = logits.softmax(dim=1)
-            if raw_scores:
-                return scores[:, 1], y  # Positives
-            labels = torch.argmax(logits, dim=1)
-            return labels, y
-
-        return wrapped
-
-    if classification_metrics:
-        BalancedAccuracy(output_transform=apply_softmax()).attach(evaluator, 'balanced_accuracy')
-        Sensitivity(output_transform=apply_softmax()).attach(evaluator, 'sensitivity')
-        Specificity(output_transform=apply_softmax()).attach(evaluator, 'specificity')
-        ROC_AUC(output_transform=apply_softmax(raw_scores=True)).attach(evaluator, 'auroc')
-
-    return evaluator
+def make_evaluator(model, criterion, device, evaluator):
+    factory = getattr(evaluators, evaluator)
+    factory = factory(model, criterion, device)
+    return factory.create_engine()
 
 
 @ex.capture

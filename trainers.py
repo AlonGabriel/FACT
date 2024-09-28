@@ -15,17 +15,21 @@ class BaseTrainer(abc.ABC):
         self.device = device
         self.criterion = criterion
         self.optimizer = optimizer
-        self.engine = Engine(self._update)
+        self.engine = Engine(self._process)
         self.config = Munch(**config)
 
-    def _update(self, engine, batch):
+    def _process(self, engine, batch):
         self.optimizer.zero_grad()
         self.model.train()
         batch = prepare_batch(batch, self.device)
-        loss = self.forward(batch)
+        loss = self.process(batch)
         loss.backward()
         self.optimizer.step()
         return loss.item()
+
+    @abc.abstractmethod
+    def process(self, batch):
+        pass
 
     def on(self, event, handler, *args, **kwargs):
         return self.engine.add_event_handler(event, lambda engine: handler(*args, **kwargs))
@@ -33,20 +37,16 @@ class BaseTrainer(abc.ABC):
     def run(self, data, num_epochs):
         return self.engine.run(data, num_epochs)
 
-    @abc.abstractmethod
-    def forward(self, batch):
-        pass
-
     def state_dict(self):
         return {'model': self.model, 'criterion': self.criterion, 'optimizer': self.optimizer, 'engine': self.engine}
 
 
 class Supervised(BaseTrainer):
 
-    def forward(self, batch):
+    def process(self, batch):
         x, y = batch
         outputs = self.model(x)
-        outputs = getattr(outputs, self.config.target)
+        outputs = outputs.predictions
         return self.criterion(outputs, y)
 
 
@@ -56,7 +56,7 @@ class FixMatch(BaseTrainer):
         super().__init__(model, criterion, optimizer, device, config)
         self.transform = IntensityAwareAugmentation()
 
-    def forward(self, batch):
+    def process(self, batch):
         (x, y), u = batch
         # Loss for labeled data
         outputs = self.model(x)
@@ -93,7 +93,7 @@ class SimCLR(BaseTrainer):
         super().__init__(model, criterion, optimizer, device, config)
         self.transform = IntensityAwareAugmentation()
 
-    def forward(self, batch):
+    def process(self, batch):
         x, y = batch
         x1, x2 = self.transform(x), self.transform(x)
         z1, z2 = self.model(x1), self.model(x2)

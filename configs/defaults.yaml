@@ -1,8 +1,8 @@
 device: cuda
 # Model
-base_model: laion/clap-htsat-unfused
+base_model: null
 projection_head: yes
-prediction_head: [2]
+prediction_head: [512, 2]
 random_init: no
 checkpoint: null
 # Labeled Data
@@ -24,11 +24,9 @@ batch_size: 64
 num_workers: 1
 num_epochs: 100
 # Evaluation
-classification_metrics: no
-clustering_metrics: no
-target: predictions
-test_eval_freq: -1
+evaluator: Classification
 eval_only: no
+test_eval_freq: -1
 eval_on_best_checkpoint: yes
 # WandB
 name: null
@@ -41,7 +39,7 @@ objective: maximize
 num_saved: 2
 resume: yes
 # Early Stopping
-early_stopping: no
+early_stopping: yes
 patience: 10
 # FixMatch
 tau: 0.95
