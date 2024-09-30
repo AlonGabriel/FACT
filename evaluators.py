@@ -8,7 +8,7 @@ from metrics import (
     BalancedAccuracy,
     Sensitivity,
     Specificity,
-    ROC_AUC,
+    ROC_AUC, Silhouette,
 )
 from transforms import IntensityAwareAugmentation
 from utils import prepare_batch
@@ -65,6 +65,18 @@ class Classification(BaseEvaluatorFactory):
         Sensitivity(output_transform=apply_softmax()).attach(engine, 'sensitivity')
         Specificity(output_transform=apply_softmax()).attach(engine, 'specificity')
         ROC_AUC(output_transform=apply_softmax(raw_scores=True)).attach(engine, 'auroc')
+
+
+class Clustering(BaseEvaluatorFactory):
+
+    def process(self, batch):
+        x, y = batch
+        outputs = self.model(x)
+        outputs = outputs.embeddings
+        return outputs, y
+
+    def register_metrics(self, engine):
+        Silhouette().attach(engine, 'silhouette')
 
 
 class SimCLR(BaseEvaluatorFactory):

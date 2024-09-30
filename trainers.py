@@ -46,7 +46,7 @@ class Supervised(BaseTrainer):
     def process(self, batch):
         x, y = batch
         outputs = self.model(x)
-        outputs = outputs.predictions
+        outputs = getattr(outputs, self.config.target)
         return self.criterion(outputs, y)
 
 

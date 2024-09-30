@@ -16,6 +16,7 @@ loss_fn: CrossEntropyLoss
 loss_params: {}
 # Trainer
 trainer: Supervised
+target: predictions
 # Optimizer
 optimizer: AdamW
 learning_rate: 0.0001

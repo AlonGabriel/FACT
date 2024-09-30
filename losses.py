@@ -1,4 +1,5 @@
 import functools
+import random
 
 import torch
 import torch.nn as nn
@@ -59,3 +60,37 @@ class NTXentLoss(nn.Module):
             mask[i, num + i] = 0
             mask[num + i, i] = 0
         return mask.to(device)
+
+
+class TripletLoss(nn.TripletMarginLoss):
+
+    def __init__(self, margin=1.0, p=2.0):
+        """
+        Computes the **Triplet Loss** with hard negative mining.
+
+        Parameters
+        ----------
+        margin: float
+            Slack margin, which must be positive. Default: 1.
+        p: float
+            The norm degree for pairwise distance. Default: 2.
+        """
+        super().__init__(margin=margin, p=p)
+
+    # noinspection PyMethodOverriding
+    def forward(self, embeds, labels):
+        anchors = embeds  # Every sample in the spectra acts as anchor.
+        positives = self.draw_uniformly(anchors, labels, same_class=True)
+        negatives = self.draw_closer_ones(anchors, labels, same_class=False)
+        return super().forward(anchors, positives, negatives)
+
+    @classmethod
+    def draw_uniformly(cls, anchors, labels, same_class):
+        li = [random.choice(anchors[labels == y if same_class else labels != y]) for y in labels]
+        return torch.stack(li)
+
+    @classmethod
+    def draw_closer_ones(cls, anchors, labels, same_class, eps=1e-8):
+        proba = 1 / (torch.cdist(anchors, anchors) + eps)  # Selection likelihood inversely proportional to distance: closer samples are more likely to be selected
+        li = [random.choices(anchors[labels == y if same_class else labels != y], weights=proba[i, labels == y if same_class else labels != y])[0] for i, y in enumerate(labels)]
+        return torch.stack(li)

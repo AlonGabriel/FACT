@@ -1,0 +1,5 @@
+project: FACT-Triplet
+loss_fn: TripletLoss
+target: embeddings
+evaluator: Clustering
+monitor: silhouette
