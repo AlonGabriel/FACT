@@ -7,6 +7,8 @@ random_init: no
 checkpoint: null
 # Labeled Data
 dataset: null
+transform: null
+transform_params: {}
 weighted_sampling: yes
 # Unlabeled Data
 unlabeled_data: null

@@ -6,6 +6,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from transformers import CLIPConfig, CLIPModel
 from transformers import ClapConfig, ClapModel
 
 from dreams import DreaMS
@@ -81,6 +82,26 @@ class CLAPBasedModel(FoundationModel):
         return raw_outputs, proj_embeds
 
 
+class CLIPBasedModel(FoundationModel):
+
+    @staticmethod
+    def from_base_model(base_model, projection_head, random_init, prediction_head):
+        clip = CLIPModel(CLIPConfig.from_pretrained(base_model)) if random_init else CLIPModel.from_pretrained(base_model)
+        proj_head = clip.visual_projection if projection_head else None
+        backbone = clip.vision_model
+        d_input = backbone.config.projection_dim if projection_head else backbone.config.hidden_size
+        pred_head = FoundationModel.mlp_head(d_input, prediction_head) if prediction_head else None
+        return CLIPBasedModel(backbone, proj_head, pred_head)
+
+    def forward_backbone(self, x):
+        raw_outputs = self.backbone(x).pooler_output
+        proj_embeds = None
+        if self.proj_head is not None:
+            proj_embeds = self.proj_head(raw_outputs)
+            proj_embeds = F.normalize(proj_embeds)
+        return raw_outputs, proj_embeds
+
+
 class DreaMSBasedModel(FoundationModel):
 
     @staticmethod
@@ -115,6 +136,7 @@ class DreaMSBasedModel(FoundationModel):
 
 construct = {
     'laion/clap-htsat-unfused': CLAPBasedModel,
+    'openai/clip-vit-base-patch32': CLIPBasedModel,
     'pluskal-lab/DreaMS': DreaMSBasedModel,
 }
 

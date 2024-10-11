@@ -20,6 +20,7 @@ from sacred import Experiment
 import evaluators
 import losses
 import trainers
+import transforms
 from datasets import (
     NumpyDataset,
     ZippedLoader,
@@ -65,11 +66,20 @@ def make_optimizer(model, optimizer, learning_rate):
 
 
 @ex.capture
-def make_loaders(dataset, batch_size, weighted_sampling, num_workers, unlabeled_data, unlabeled_ratio):
+def make_transform(transform, transform_params):
+    if transform is None:
+        return None
+    constructor = getattr(transforms, transform)
+    return constructor(**transform_params)
+
+
+@ex.capture
+def make_loaders(dataset, weighted_sampling, batch_size, num_workers, unlabeled_data, unlabeled_ratio):
     dataset = np.load(dataset)
-    train_set = from_npz(dataset, 'train')
-    valid_set = from_npz(dataset, 'val')
-    test_set = from_npz(dataset, 'test')
+    transform = make_transform()
+    train_set = from_npz(dataset, 'train', transform=transform)
+    valid_set = from_npz(dataset, 'val', transform=transform)
+    test_set = from_npz(dataset, 'test', transform=transform)
     if weighted_sampling:
         train_loader = data.DataLoader(train_set, batch_size=batch_size, sampler=train_set.weighted_sampler(), num_workers=num_workers)
     else:
