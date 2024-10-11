@@ -4,7 +4,7 @@ import torch
 from ignite.engine import Engine
 from munch import Munch
 
-from transforms import IntensityAwareAugmentation
+from augmentation import IntensityAwareAugmentation
 from utils import prepare_batch
 
 

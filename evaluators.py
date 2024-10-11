@@ -4,13 +4,13 @@ import torch
 from ignite.engine import Engine
 from ignite.metrics import Loss
 
+from augmentation import IntensityAwareAugmentation
 from metrics import (
     BalancedAccuracy,
     Sensitivity,
     Specificity,
     ROC_AUC, Silhouette,
 )
-from transforms import IntensityAwareAugmentation
 from utils import prepare_batch
 
 
