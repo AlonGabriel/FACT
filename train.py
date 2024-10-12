@@ -21,6 +21,7 @@ import evaluators
 import losses
 import trainers
 import transforms
+from augmentation import construct_augmenter
 from datasets import (
     NumpyDataset,
     ZippedLoader,
@@ -96,15 +97,17 @@ def make_loaders(dataset, weighted_sampling, batch_size, num_workers, unlabeled_
 
 
 @ex.capture
-def make_trainer(model, criterion, optimizer, device, trainer, _config):
+def make_trainer(model, criterion, optimizer, device, trainer, base_model, _config):
     constructor = getattr(trainers, trainer)
-    return constructor(model, criterion, optimizer, device, _config)
+    augmenter = construct_augmenter(base_model)
+    return constructor(model, criterion, optimizer, augmenter, device, _config)
 
 
 @ex.capture
-def make_evaluator(model, criterion, device, evaluator):
+def make_evaluator(model, criterion, device, evaluator, base_model):
     factory = getattr(evaluators, evaluator)
-    factory = factory(model, criterion, device)
+    augmenter = construct_augmenter(base_model)
+    factory = factory(model, criterion, augmenter, device)
     return factory.create_engine()
 
 

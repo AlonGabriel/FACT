@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.interpolate as interpolate
 import torch
+import torchvision.transforms as T
 
 
 class IntensityAwareAugmentation:
+
     def __init__(self, ticks_range=(100, 1000), tick_shift_limit=2, signature_threshold=0.15,
                  background_noise_ratio=0.7, background_noise_spline_points=4,
                  signature_noise_ratio=0.3,
@@ -110,3 +112,63 @@ class IntensityAwareAugmentation:
         augmented_ticks = np.argsort(augmented_ticks, axis=1)
 
         return torch.from_numpy(augmented_ticks).to(spectra.device)
+
+
+class RandomImSpectAugmentation:
+
+    def __init__(self, resized_crop=True, color_distortion=True, gaussian_blur=True, im_size=224, distortion=1):
+        """
+        Applies a series of image augmentation techniques to a batch of images.
+
+        Adapted from https://github.com/AndrewAtanov/simclr-pytorch/blob/master/models/ssl.py.
+
+        Parameters
+        ----------
+        resized_crop: bool
+            Whether to apply resized crop.
+        color_distortion: bool
+            Whether to apply color distortion.
+        gaussian_blur: bool
+            Whether to apply Gaussian blur.
+        im_size: int
+            Image size.
+        distortion: float
+            Color distortion strength.
+        """
+        self.resized_crop = None
+        if resized_crop:
+            self.resized_crop = T.RandomResizedCrop(im_size, (0.08, 1), interpolation=T.InterpolationMode.BICUBIC)
+        self.color_distortion = None
+        if color_distortion:
+            color_jitter = T.ColorJitter(0.8 * distortion, 0.8 * distortion, 0.8 * distortion, 0.2 * distortion)
+            self.color_distortion = T.Compose([
+                T.RandomApply([color_jitter], p=0.8),
+                T.RandomGrayscale(p=0.2)
+            ])
+        self.gaussian_blur = None
+        if gaussian_blur:
+            self.gaussian_blur = T.GaussianBlur(np.ceil(im_size / 10), 0.5)
+
+    def __call__(self, images):
+        if self.resized_crop:
+            images = self.apply(self.resized_crop, images)
+        if self.color_distortion:
+            images = self.apply(self.color_distortion, images)
+        if self.gaussian_blur:
+            images = self.apply(self.gaussian_blur, images)
+        return images
+
+    @classmethod
+    def apply(cls, func, batch):
+        return torch.stack([func(el) for el in batch])
+
+
+construct = {
+    'laion/clap-htsat-unfused': IntensityAwareAugmentation,
+    'openai/clip-vit-base-patch32': RandomImSpectAugmentation,
+    'pluskal-lab/DreaMS': IntensityAwareAugmentation,
+}
+
+
+def construct_augmenter(base_model):
+    return construct[base_model]()

@@ -4,17 +4,17 @@ import torch
 from ignite.engine import Engine
 from munch import Munch
 
-from augmentation import IntensityAwareAugmentation
 from utils import prepare_batch
 
 
 class BaseTrainer(abc.ABC):
 
-    def __init__(self, model, criterion, optimizer, device, config):
+    def __init__(self, model, criterion, optimizer, augmenter, device, config):
         self.model = model
         self.device = device
         self.criterion = criterion
         self.optimizer = optimizer
+        self.augmenter = augmenter
         self.engine = Engine(self._process)
         self.config = Munch(**config)
 
@@ -52,10 +52,6 @@ class Supervised(BaseTrainer):
 
 class FixMatch(BaseTrainer):
 
-    def __init__(self, model, criterion, optimizer, device, config):
-        super().__init__(model, criterion, optimizer, device, config)
-        self.transform = IntensityAwareAugmentation()
-
     def process(self, batch):
         (x, y), u = batch
         # Loss for labeled data
@@ -74,7 +70,7 @@ class FixMatch(BaseTrainer):
         # Loss for unlabeled data
         l_u = 0
         if is_confident.any():
-            ut = self.transform(u)
+            ut = self.augmenter(u)
             outputs = self.model(ut)
             outputs = outputs.predictions
             l_u = self.criterion(outputs[is_confident], pseudo_labels[is_confident])
@@ -89,13 +85,9 @@ class FixMatch(BaseTrainer):
 
 class SimCLR(BaseTrainer):
 
-    def __init__(self, model, criterion, optimizer, device, config):
-        super().__init__(model, criterion, optimizer, device, config)
-        self.transform = IntensityAwareAugmentation()
-
     def process(self, batch):
         x, y = batch
-        x1, x2 = self.transform(x), self.transform(x)
+        x1, x2 = self.augmenter(x), self.augmenter(x)
         z1, z2 = self.model(x1), self.model(x2)
         z1, z2 = z1.embeddings, z2.embeddings
         return self.criterion(z1, z2)

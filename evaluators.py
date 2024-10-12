@@ -4,21 +4,22 @@ import torch
 from ignite.engine import Engine
 from ignite.metrics import Loss
 
-from augmentation import IntensityAwareAugmentation
 from metrics import (
     BalancedAccuracy,
     Sensitivity,
     Specificity,
-    ROC_AUC, Silhouette,
+    ROC_AUC,
+    Silhouette,
 )
 from utils import prepare_batch
 
 
 class BaseEvaluatorFactory(abc.ABC):
 
-    def __init__(self, model, criterion, device):
+    def __init__(self, model, criterion, augmenter, device):
         self.model = model
         self.criterion = criterion
+        self.augmenter = augmenter
         self.device = device
 
     def _process(self, engine, batch):
@@ -81,13 +82,9 @@ class Clustering(BaseEvaluatorFactory):
 
 class SimCLR(BaseEvaluatorFactory):
 
-    def __init__(self, model, criterion, device):
-        super().__init__(model, criterion, device)
-        self.transform = IntensityAwareAugmentation()
-
     def process(self, batch):
         x, y = batch
-        x1, x2 = self.transform(x), self.transform(x)
+        x1, x2 = self.augmenter(x), self.augmenter(x)
         z1, z2 = self.model(x1), self.model(x2)
         z1, z2 = z1.embeddings, z2.embeddings
         return z1, z2
