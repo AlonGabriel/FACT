@@ -1,49 +1,49 @@
-device: cuda
+device: cuda                    # cuda or cpu
 # Model
-base_model: null
-projection_head: yes
-prediction_head: [512, 2]
-random_init: no
-checkpoint: null
+base_model: null                # See models.py for available models
+projection_head: yes            # Whether to use a projection head
+prediction_head: [512, 2]       # Number of units in each layer of the prediction head
+random_init: no                 # Whether to initialize the backbone randomly
+checkpoint: null                # Path to a checkpoint to load the model from; used for finetuning
 # Labeled Data
-dataset: null
-transform: null
-transform_params: {}
-weighted_sampling: yes
+dataset: null                   # NPZ file, containing the training set, validation set, and test set
+transform: null                 # Transform to apply to the data. See transforms.py for available transforms
+transform_params: {}            # Parameters for the transform
+weighted_sampling: yes          # Whether to use weighted sampling for the training set
 # Unlabeled Data
-unlabeled_data: null
-unlabeled_ratio: 1
+unlabeled_data: null            # NPZ file, containing the unlabeled set; used for FixMatch
+unlabeled_ratio: 1              # Ratio of the unlabeled set to the labeled set
 # Loss
-loss_fn: CrossEntropyLoss
-loss_params: {}
+loss_fn: CrossEntropyLoss       # PyTorch loss function or custom. See losses.py for available custom loss functions
+loss_params: {}                 # Parameters for the loss function
 # Trainer
-trainer: Supervised
-target: predictions
+trainer: Supervised             # Trainer to use. See trainers.py for available trainers
+target: predictions             # Target for the trainer; only used in `Supervised` trainer
 # Optimizer
-optimizer: AdamW
-learning_rate: 0.0001
+optimizer: AdamW                # PyTorch optimizer.
+learning_rate: 0.0001           # Learning rate
 # Training
-batch_size: 64
-num_workers: 1
-num_epochs: 100
+batch_size: 64                  # Batch size
+num_workers: 1                  # Number of workers for the DataLoader. Might cause issues in Windows
+num_epochs: 100                 # Number of epochs
 # Evaluation
-evaluator: Classification
-eval_only: no
-test_eval_freq: -1
-eval_on_best_checkpoint: yes
+evaluator: Classification       # Evaluator to use. See evaluators.py for available evaluators
+eval_only: no                   # Whether to only evaluate the model
+test_eval_freq: -1              # Frequency of evaluation on the test set during training
+eval_on_best_checkpoint: yes    # Whether to evaluate on the best checkpoint in addition to the last checkpoint
 # WandB
-name: null
-project: FACT
+name: null                      # Name of the run on WandB. If not provided, a random name will be generated
+project: FACT                   # Name of the project on WandB
 # Checkpointing
-checkpoint_interval: 5
-checkpoints_dir: null
-monitor: balanced_accuracy
-objective: maximize
-num_saved: 2
-resume: yes
+checkpoint_interval: 5          # Frequency of saving checkpoints
+checkpoints_dir: null           # Directory to save checkpoints
+monitor: balanced_accuracy      # Metric to monitor for selecting the best callback. Can also be `loss`
+objective: maximize             # Objective for the monitored metric
+num_saved: 2                    # Number of checkpoints to keep
+resume: yes                     # Whether to resume training from the last checkpoint
 # Early Stopping
-early_stopping: yes
-patience: 10
+early_stopping: yes             # Whether to use early stopping
+patience: 10                    # Number of epochs to wait before early stopping
 # FixMatch
-tau: 0.95
-llambda: 1
+tau: 0.95                       # Threshold for pseudo-labeling
+llambda: 1                      # Weight for the consistency loss
