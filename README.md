@@ -58,6 +58,14 @@ python train.py with base_model=laion/clap-htsat-unfused dataset=<PATH> checkpoi
 
 Note that you do not need to specify the `Triplet` configuration since the model has already been pretrained. Instead, you need to reference the final (or best) checkpoint file from the pretraining step.
 
+## Evaluation
+
+Model checkpoints (all 30 finetuning runs, and top 10 pretraining runs) are available at `/mnt/mirage/med-i_data/Data/checkpoints/FACT_IPCAI2025`. To reproduce the results of the paper, run the following command:
+
+```bash
+python train.py with base_model=laion/clap-htsat-unfused dataset=<PATH> checkpoint=<CHECKPOINT> eval_only=True
+````
+
 ## Specs
 
 For our experiments, we used an NVIDIA Quadro RTX 6000 (24GB) GPU and 32GB of RAM. With the default hyperparameters, the model should fit in the GPU memory. If you encounter any issues, consider reducing the batch size.
