@@ -61,12 +61,25 @@ class FoundationModel(nn.Module, ABC):
 class CLAPBasedModel(FoundationModel):
 
     @staticmethod
-    def from_base_model(base_model, projection_head, random_init, prediction_head):
+    def from_base_model(base_model, projection_head, random_init, prediction_head, reinit_proj_head=False):
+#         clap = ClapModel(ClapConfig.from_pretrained(base_model)) if random_init else ClapModel.from_pretrained(base_model)
+#         proj_head = clap.audio_projection if projection_head else None
+#         backbone = clap.audio_model
+#         d_input = backbone.config.projection_dim if projection_head else backbone.config.hidden_size
+#         pred_head = FoundationModel.mlp_head(d_input, prediction_head) if prediction_head else None
+#         return CLAPBasedModel(backbone, proj_head, pred_head)
         clap = ClapModel(ClapConfig.from_pretrained(base_model)) if random_init else ClapModel.from_pretrained(base_model)
         proj_head = clap.audio_projection if projection_head else None
+        if reinit_proj_head and proj_head is not None:
+            print("Reinitializing projection head...")
+            # Reinitialize the layers in projection head
+            proj_head.linear1 = nn.Linear(proj_head.linear1.in_features, proj_head.linear1.out_features, bias=True)
+            proj_head.linear2 = nn.Linear(proj_head.linear2.in_features, proj_head.linear2.out_features, bias=True)
+
         backbone = clap.audio_model
         d_input = backbone.config.projection_dim if projection_head else backbone.config.hidden_size
         pred_head = FoundationModel.mlp_head(d_input, prediction_head) if prediction_head else None
+
         return CLAPBasedModel(backbone, proj_head, pred_head)
 
     def forward_backbone(self, x):
@@ -105,7 +118,7 @@ class CLIPBasedModel(FoundationModel):
 class DreaMSBasedModel(FoundationModel):
 
     @staticmethod
-    def from_base_model(base_model, projection_head, random_init, prediction_head):
+    def from_base_model(base_model, projection_head, random_init, prediction_head, reinit_proj_head=False):
         backbone = DreaMS()
         d_model = backbone.d_model
         proj_head = nn.Linear(d_model, d_model)
@@ -141,5 +154,5 @@ construct = {
 }
 
 
-def construct_model(base_model, projection_head, random_init, prediction_head):
-    return construct[base_model].from_base_model(base_model, projection_head, random_init, prediction_head)
+def construct_model(base_model, projection_head, random_init, prediction_head, reinit_proj_head=False):
+    return construct[base_model].from_base_model(base_model, projection_head, random_init, prediction_head, reinit_proj_head)

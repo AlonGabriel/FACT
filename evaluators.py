@@ -9,6 +9,7 @@ from metrics import (
     Sensitivity,
     Specificity,
     ROC_AUC,
+    mcBalancedAccuracy,
     Silhouette,
 )
 from utils import prepare_batch
@@ -67,7 +68,28 @@ class Classification(BaseEvaluatorFactory):
         Specificity(output_transform=apply_softmax()).attach(engine, 'specificity')
         ROC_AUC(output_transform=apply_softmax(raw_scores=True)).attach(engine, 'auroc')
 
+class MultiClassClassification(BaseEvaluatorFactory):
 
+    def __init__(self, model, criterion, augmenter, device):
+        super().__init__(model, criterion, augmenter, device)
+
+    def process(self, batch):
+        x, y = batch
+        outputs = self.model(x)
+        outputs = outputs.predictions
+        return outputs, y
+
+    def register_metrics(self, engine):
+        def apply_softmax():
+            def wrapped(output):
+                logits, y = output
+                return logits, y
+
+            return wrapped
+        # Only BalancedAccuracy for multiclass
+        mcBalancedAccuracy(output_transform=apply_softmax()).attach(engine, 'balanced_accuracy')
+
+            
 class Clustering(BaseEvaluatorFactory):
 
     def process(self, batch):
@@ -84,6 +106,7 @@ class SimCLR(BaseEvaluatorFactory):
 
     def process(self, batch):
         x, y = batch
+        print(self.augmenter)
         x1, x2 = self.augmenter(x), self.augmenter(x)
         z1, z2 = self.model(x1), self.model(x2)
         z1, z2 = z1.embeddings, z2.embeddings

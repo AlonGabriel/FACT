@@ -4,7 +4,7 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torch.distributed as dist
 
 class NTXentLoss(nn.Module):
 
@@ -29,8 +29,8 @@ class NTXentLoss(nn.Module):
         batch_size, embed_dim = zi.shape
 
         if self.normalize:
-            zi = F.normalize(zi, p=2, dim=1)
-            zj = F.normalize(zj, p=2, dim=1)
+            zi = F.normalize(zi.clone(), p=2, dim=1)
+            zj = F.normalize(zj.clone(), p=2, dim=1)
 
         sim_matrix = self.cosine_similarity(zi, zj)
         sim_ij = torch.diag(sim_matrix, batch_size)
@@ -38,11 +38,9 @@ class NTXentLoss(nn.Module):
 
         positives = torch.cat([sim_ij, sim_ji], dim=0)
         nominator = torch.exp(positives / self.temperature)
-
         mask = self.negatives_mask(batch_size, device=sim_matrix.device)
         denominator = mask * torch.exp(sim_matrix / self.temperature)
         denominator = torch.sum(denominator, dim=1)
-
         losses = -torch.log(nominator / (denominator + 1e-6))
         return torch.sum(losses) / (2 * batch_size)
 
@@ -89,8 +87,23 @@ class TripletLoss(nn.TripletMarginLoss):
         li = [random.choice(anchors[labels == y if same_class else labels != y]) for y in labels]
         return torch.stack(li)
 
+#     @classmethod
+#     def draw_closer_ones(cls, anchors, labels, same_class, eps=1e-8):
+#         proba = 1 / (torch.cdist(anchors, anchors) + eps)  # Selection likelihood inversely proportional to distance: closer samples are more likely to be selected
+#         li = [random.choices(anchors[labels == y if same_class else labels != y], weights=proba[i, labels == y if same_class else labels != y])[0] for i, y in enumerate(labels)]
+#         return torch.stack(li)
+
     @classmethod
     def draw_closer_ones(cls, anchors, labels, same_class, eps=1e-8):
-        proba = 1 / (torch.cdist(anchors, anchors) + eps)  # Selection likelihood inversely proportional to distance: closer samples are more likely to be selected
-        li = [random.choices(anchors[labels == y if same_class else labels != y], weights=proba[i, labels == y if same_class else labels != y])[0] for i, y in enumerate(labels)]
+        proba = 1 / (torch.cdist(anchors, anchors) + eps)
+        li = []
+        fallback_count = 0
+        for i, y in enumerate(labels):
+            valid_samples = anchors[labels == y if same_class else labels != y]
+            if valid_samples.numel() > 0:  # Ensure there's at least one valid sample
+                selected = random.choices(valid_samples, weights=proba[i, labels == y if same_class else labels != y])[0]
+                li.append(selected)
+            else:
+                # Fallback to using the anchor itself
+                li.append(anchors[i])
         return torch.stack(li)

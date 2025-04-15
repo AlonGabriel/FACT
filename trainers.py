@@ -19,7 +19,7 @@ class BaseTrainer(abc.ABC):
         self.config = Munch(**config)
 
     def _process(self, engine, batch):
-        self.optimizer.zero_grad()
+        self.optimizer.zero_grad(set_to_none=False)
         self.model.train()
         batch = prepare_batch(batch, self.device)
         loss = self.process(batch)
@@ -91,3 +91,5 @@ class SimCLR(BaseTrainer):
         z1, z2 = self.model(x1), self.model(x2)
         z1, z2 = z1.embeddings, z2.embeddings
         return self.criterion(z1, z2)
+
+

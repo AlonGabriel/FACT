@@ -72,28 +72,9 @@ For our experiments, we used an NVIDIA Quadro RTX 6000 (24GB) GPU and 32GB of RA
 
 ## Citation
 
-> Farahmand, M., Jamzad, A., Fooladgar, F., Connolly, L., Kaufmann, M., Ren, K.Y.M., Rudan, J., McKay, D., Fichtinger, G. and Mousavi, P., 2025. "FACT: Foundation Model for Assessing Cancer Tissue Margins with Mass Spectrometry". International Journal of Computer Assisted Radiology and Surgery.
+> TBD
 
 ```bibtex
-﻿@article{Farahmand2025,
-author={Farahmand, Mohammad
-and Jamzad, Amoon
-and Fooladgar, Fahimeh
-and Connolly, Laura
-and Kaufmann, Martin
-and Ren, Kevin Yi Mi
-and Rudan, John
-and McKay, Doug
-and Fichtinger, Gabor
-and Mousavi, Parvin},
-title={FACT: Foundation Model for Assessing Cancer Tissue Margins with Mass Spectrometry},
-journal={International Journal of Computer Assisted Radiology and Surgery},
-year={2025},
-month={Apr},
-day={04},
-issn={1861-6429},
-doi={10.1007/s11548-025-03355-8},
-url={https://doi.org/10.1007/s11548-025-03355-8}
-}
+TBD
 ```
 

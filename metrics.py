@@ -3,9 +3,11 @@ from ignite.metrics import (
     Metric,
     ROC_AUC,
     Recall,
+    Accuracy
 )
 from sklearn import metrics
-
+import torch
+import torch.nn.functional as F
 
 class Sensitivity(Recall):
     pass  # Nothing to do! Recall and sensitivity are the same thing.
@@ -22,6 +24,12 @@ class Specificity(Sensitivity):
 
 def BalancedAccuracy(*args, **kwargs):
     return (Sensitivity(*args, **kwargs) + Specificity(*args, **kwargs)) / 2
+
+
+class mcBalancedAccuracy(Recall):
+    """ Compute Balanced Accuracy for Multi-Class Classification """
+    def __init__(self, output_transform=lambda x: x):
+        super().__init__(average='macro', output_transform=output_transform)
 
 
 class Silhouette(Metric):
