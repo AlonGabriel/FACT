@@ -73,7 +73,7 @@ Note that the second value of the prediction head should be the number of classe
 
 ## Evaluation
 
-Model checkpoints (all 30 finetuning runs, and top 10 pretraining runs) are available at `/mnt/mirage/med-i_data/Data/checkpoints/FACT_IPCAI2025`. To reproduce the results of the paper, run the following command:
+Model checkpoints (all crossfold validation runs, and top pretraining runs) are available at `P:\data\Alon-DESI_FACT`. To reproduce the results of the paper, run the following command:
 
 ```bash
 python train.py with base_model=laion/clap-htsat-unfused dataset=<PATH> checkpoint=<CHECKPOINT> eval_only=True
