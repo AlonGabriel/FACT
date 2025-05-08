@@ -80,7 +80,7 @@ python train.py with base_model=laion/clap-htsat-unfused dataset=<PATH> checkpoi
 With the default hyperparameters, the model should fit in the GPU memory. If you encounter any issues, consider reducing the batch size or using the train-multi-gpus.py script.
 
 ## Deployment 
-(.figures/Deployment_Figure.png)
+![Deployment](.figures/Deployment_Figure.png)
 
 The deployment module will make pixel-wise predictions using the input model and reconstruct a corresponding segmentation map. To deploy the model on a full DESI slide, run the following command:
 
