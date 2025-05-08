@@ -1,3 +1,22 @@
+"""
+deployment.py
+
+This script performs full model deployment for DESI-MSI data, including:
+- Loading and aligning raw spectral data (.txt or .csv)
+- Normalizing peak intensities
+- Predicting pixel-level class labels using a pretrained model
+- Generating segmentation visualizations
+- Optionally visualizing embeddings and clustering spatial features
+
+Designed for end-to-end inference on MSI tissue slides using trained classification models.
+
+Typical usage:
+    python deployment.py --desi_data_path <path> --save_path <output> --checkpoint <model.pt> --mz_ref <ref.npy>
+
+Author:
+    Alon Gabriel, 2025
+"""
+
 import argparse
 import pathlib
 import torch
@@ -423,49 +442,6 @@ class DESIModelDeployment:
         plt.close()
 
         print(f"Clustering complete. Results saved to {save_path}")
-#     def cluster_embeddings(self, embeddings, dim_y, dim_x, save_path, n_clusters=3, method='kmeans'):
-#         """
-#         Cluster embeddings to generate a pixel-wise segmentation map.
-        
-#         Inputs:
-#             embeddings - array of embeddings for each pixel (NumPy array of shape [num_pixels, num_dimensions]).
-#             dim_y - Y dimension of the original MSI (int).
-#             dim_x - X dimension of the original MSI (int).
-#             save_path - Path to save the clustering result as an image.
-#             n_clusters - Number of clusters for segmentation.
-#             method - Clustering method ('kmeans' or 'dbscan').
-#         """
-#         embeddings = np.nan_to_num(embeddings, nan=0.0, posinf=1e6, neginf=-1e6)
-
-#         # Normalize and reduce dimensions for clustering
-#         scaler = StandardScaler()
-#         embeddings_normalized = scaler.fit_transform(embeddings)
-
-#         # Optionally reduce dimensionality (e.g., PCA to 2D or 3D)
-#         pca = PCA(n_components=3)
-#         embeddings_reduced = pca.fit_transform(embeddings_normalized)
-
-#         # Perform clustering
-#         if method == 'kmeans':
-#             clustering_model = KMeans(n_clusters=n_clusters, random_state=42)
-#         else:
-#             raise ValueError("Only 'kmeans' is currently supported for clustering.")
-        
-#         cluster_labels = clustering_model.fit_predict(embeddings_reduced)
-
-#         # Reshape cluster labels into the original image dimensions
-#         cluster_image = cluster_labels.reshape((dim_y, dim_x))
-
-#         # Visualize the clustering result
-#         plt.figure(figsize=(10, 8))
-#         plt.imshow(cluster_image, cmap='viridis')
-#         plt.colorbar(label="Cluster")
-#         plt.title(f"Pixel-wise Clustering ({method.capitalize()})")
-#         plt.axis('off')
-#         plt.savefig(save_path, bbox_inches='tight', dpi=600)
-#         plt.close()
-
-#         print(f"Clustering complete. Results saved to {save_path}")
         
         
     def deploy(self, desi_data_path, save_path, normalize, visualize_embeddings=False, cluster=False, mask_path=None, n_clusters=2, dimension=None, metric='mean'):
