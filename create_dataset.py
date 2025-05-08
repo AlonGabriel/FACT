@@ -1,3 +1,21 @@
+"""
+create_dataset.py
+
+This script constructs train, validation, and test datasets from a full DESI-MSI CSV 
+based on a slide list specifying the split for each slide.
+
+Functionality includes:
+- Optional remapping to binary or multiclass labels
+- Filtering by slide identifiers
+- Exporting NumPy `.npz` file with split datasets (X and y for each set)
+
+Typical usage:
+    python create_dataset.py --data_path <data.csv> --slide_list <slide_list.csv> --save_name <output_name> [--multiclass]
+
+Author:
+    Alon Gabriel, 2025
+"""
+
 import numpy as np
 import pandas as pd
 import os
