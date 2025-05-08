@@ -1,4 +1,4 @@
-# FACT: Foundation model for Assessing Cancer Tissue margins
+# Implementation of FACT on Desorption ElectroSpray Ionization Mass Spectrometry Imaging (DESI-MSI) Data
 
 ![Graphical Abstract](.figures/Model_figure.png)
 
