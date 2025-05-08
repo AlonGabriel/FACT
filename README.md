@@ -88,13 +88,15 @@ The deployment module will make pixel-wise predictions using the input model and
 python deployment.py --desi_data_path <PATH> --checkpoint <CHECKPOINT> --save_path <PATH> --mz_ref <PATH>
 ```
 
-**Required Flags**
+#### Required Flags
+
 --desi_data_path: Path to the DESI text file for input data
 --checkpoint: Path to the model checkpoint file to use to make predictions
 --save_path: Path to save the output segmentation map
 --mz_ref: Path to the reference file containing the m/z values used in model training
 
-**Optional Flags**
+#### Optional Flags
+
 --base_model: Base model name (Default: laion/clap-htsat-unfused)
 --normalize: Method for peak normalization (Options: MinMaxNormalize or SampleNormalize)
 --projection_head: Use projection head in model (bool, Default: True)
