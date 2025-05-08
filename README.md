@@ -84,6 +84,33 @@ python train.py with base_model=laion/clap-htsat-unfused dataset=<PATH> checkpoi
 With the default hyperparameters, the model should fit in the GPU memory. If you encounter any issues, consider reducing the batch size or using the train-multi-gpus.py script.
 
 ## Deployment 
+![Graphical Abstract](.figures/Deployment_Figure.png)
+
+To deploy the model on a full DESI slide, make pixel-wise predictions and reconstruct a corresponding segmentation map, run the following command:
+
+```bash
+python deployment.py --desi_data_path <PATH> --checkpoint <CHECKPOINT> --save_path <PATH> --mz_ref <PATH>
+```
+
+**Required Flags**
+--desi_data_path: Path to the DESI text file for input data
+--checkpoint: Path to the model checkpoint file to use to make predictions
+--save_path: Path to save the output segmentation map
+--mz_ref: Path to the reference file containing the m/z values used in model training
+
+**Optional Flags**
+--base_model: Base model name (Default: laion/clap-htsat-unfused)
+--normalize: Method for peak normalization (Options: MinMaxNormalize or SampleNormalize)
+--projection_head: Use projection head in model (bool, Default: True)
+--randome_init: Randomly initialize the model (bool, Default: False)
+--prediction_head: Prediction head dimensions ([int, int])
+--mask_path: Path to segmentation mask for masked deployment
+--visualize_embeddings: Visualize embedding space (bool)
+
+If --visualize_embeddings True:
+--cluster: Cluster embeddings (bool)
+--dimension: Specific embedding dimension to visualize (int), if none computes based on summary metric
+--metric: Summary metric for the embeddings (Options: L2, mean, max, pca)
 
 
 ## Citation
