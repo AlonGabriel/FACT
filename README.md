@@ -91,23 +91,35 @@ python deployment.py --desi_data_path <PATH> --checkpoint <CHECKPOINT> --save_pa
 #### Required Flags
 
 --desi_data_path: Path to the DESI text file for input data
+
 --checkpoint: Path to the model checkpoint file to use to make predictions
+
 --save_path: Path to save the output segmentation map
+
 --mz_ref: Path to the reference file containing the m/z values used in model training
 
 #### Optional Flags
 
 --base_model: Base model name (Default: laion/clap-htsat-unfused)
+
 --normalize: Method for peak normalization (Options: MinMaxNormalize or SampleNormalize)
+
 --projection_head: Use projection head in model (bool, Default: True)
+
 --randome_init: Randomly initialize the model (bool, Default: False)
+
 --prediction_head: Prediction head dimensions ([int, int])
+
 --mask_path: Path to segmentation mask for masked deployment
+
 --visualize_embeddings: Visualize embedding space (bool)
 
 If --visualize_embeddings True:
+
 --cluster: Cluster embeddings (bool)
+
 --dimension: Specific embedding dimension to visualize (int), if none computes based on summary metric
+
 --metric: Summary metric for the embeddings (Options: L2, mean, max, pca)
 
 
