@@ -105,8 +105,7 @@ python deployment.py --desi_data_path <PATH> --checkpoint <CHECKPOINT> --save_pa
 --mask_path: Path to segmentation mask for masked deployment <br />
 --visualize_embeddings: Visualize embedding space (bool) <br />
 
-If --visualize_embeddings True:
-
+If --visualize_embeddings True: <br />
 --cluster: Cluster embeddings (bool) <br />
 --dimension: Specific embedding dimension to visualize (int), if none computes based on summary metric <br />
 --metric: Summary metric for the embeddings (Options: L2, mean, max, pca) <br />
