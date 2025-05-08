@@ -1,6 +1,6 @@
 # FACT: Foundation model for Assessing Cancer Tissue margins
 
-![Graphical Abstract](.figures/graphical-abstract.png)
+![Graphical Abstract](.figures/Model_figure.png)
 
 PyTorch implementation of [FACT: Foundation model for Assessing Cancer Tissue margins](#).
 
