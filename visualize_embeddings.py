@@ -1,3 +1,20 @@
+"""
+visualize_embeddings.py
+
+This script visualizes learned embeddings from a pretrained DESI-MSI classification model.
+
+It includes:
+- Embedding extraction from aligned MSI data
+- Dimensionality reduction via PCA or UMAP
+- 2D/3D scatter plotting and contour visualization
+- Clustering with KMeans and silhouette scoring
+
+Intended for exploratory analysis of embedding spaces to assess class separation and spatial structure.
+
+Author:
+    Alon Gabriel, 2025
+"""
+
 import pathlib
 import torch
 import numpy as np
