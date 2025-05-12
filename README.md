@@ -21,10 +21,6 @@ Finally, navigate to the project directory and install the other dependencies:
 pip install -r requirements.txt
 ```
 
-## Preprocessing
-
-To recreate the results of the study, ensure peaks are aligned across all slides and TIC normalized. All preprocessing can be completed using [MassVision](https://slicermassvision.readthedocs.io/en/latest/Getting%20Started.html).
-
 ## Pretraining
 
 To pretrain the model as per the study, run the following command:
